@@ -1,23 +1,36 @@
 <script setup>
 import { ref, computed } from 'vue';
 import "leaflet/dist/leaflet.css";
-import { LMap, LTileLayer, LPolygon } from "@vue-leaflet/vue-leaflet";
+import { LMap, LTileLayer, LPolygon, LWmsTileLayer } from "@vue-leaflet/vue-leaflet";
 import ParcelDetail from '../components/ParcelDetail.vue';
 
-const zoom = ref(15);
-const center = ref([6.1319, 1.2228]); // Lomé 
+const zoom = ref(17); // Zoomed in closer for cadastral data
+const center = ref([6.2340, 1.2038]); 
 
 const selectedParcel = ref(null);
-const filterStatus = ref('all'); // Level 4: Filter state
+const filterStatus = ref('all'); 
+
+// GeoServer Configuration
+const geoserverUrl = "https://monticulate-superingeniously-marge.ngrok-free.dev/geoserver/DCCF/wms";
+const wmsLayerOptions = {
+  layers: "DCCF:parcelles_ag1", // Added namespace just to be safe
+  format: "image/png",
+  transparent: true,
+  version: '1.1.1',
+  attribution: "geoserver",
+  maxZoom: 22,
+  tiled: true, // Often improves rendering with GeoServer
+  styles: '' // Use default style
+};
 
 const parcels = ref([
   {
     id: 1,
     latlngs: [
-      [6.1319, 1.2228],
-      [6.1329, 1.2228],
-      [6.1329, 1.2238],
-      [6.1319, 1.2238]
+      [6.2340, 1.2038],
+      [6.2350, 1.2038],
+      [6.2350, 1.2048],
+      [6.2340, 1.2048]
     ],
     owner: 'Jean Dupont',
     area: 1200,
@@ -27,9 +40,9 @@ const parcels = ref([
   {
     id: 2,
     latlngs: [
-      [6.1300, 1.2210],
-      [6.1310, 1.2200],
-      [6.1315, 1.2215]
+      [6.2320, 1.2020],
+      [6.2330, 1.2010],
+      [6.2335, 1.2025]
     ],
     owner: 'Marie Curie',
     area: 850,
@@ -39,10 +52,10 @@ const parcels = ref([
   {
     id: 3,
     latlngs: [
-       [6.1340, 1.2240],
-       [6.1350, 1.2240],
-       [6.1350, 1.2260],
-       [6.1340, 1.2250]
+       [6.2360, 1.2050],
+       [6.2370, 1.2050],
+       [6.2370, 1.2070],
+       [6.2360, 1.2060]
     ],
     owner: 'Ville de Lomé',
     area: 2500,
@@ -89,12 +102,27 @@ const closeDetail = () => {
     </div>
 
     <l-map ref="map" v-model:zoom="zoom" v-model:center="center" :useGlobalLeaflet="false">
+      <!-- Base Layer (OpenStreetMap) -->
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         layer-type="base"
         name="OpenStreetMap"
       ></l-tile-layer>
+
+      <!-- GeoServer WMS Layer -->
+      <l-wms-tile-layer
+        :url="geoserverUrl"
+        :layers="wmsLayerOptions.layers"
+        :format="wmsLayerOptions.format"
+        :transparent="wmsLayerOptions.transparent"
+        :version="wmsLayerOptions.version"
+        :styles="wmsLayerOptions.styles"
+        :tiled="wmsLayerOptions.tiled"
+        :attribution="wmsLayerOptions.attribution"
+        :max-zoom="wmsLayerOptions.maxZoom"
+      ></l-wms-tile-layer>
       
+      <!-- Vector Polygons (Mock Data) -->
       <l-polygon
         v-for="parcel in filteredParcels"
         :key="parcel.id"
