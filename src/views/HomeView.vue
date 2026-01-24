@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LPolygon, LWmsTileLayer } from "@vue-leaflet/vue-leaflet";
 import ParcelDetail from '../components/ParcelDetail.vue';
 
-const zoom = ref(17); // Zoomed in closer for cadastral data
+const zoom = ref(19); // Zoomed in closer for cadastral data
 const center = ref([6.2340, 1.2038]); 
 
 const selectedParcel = ref(null);
@@ -22,6 +22,7 @@ const wmsLayerOptions = {
   tiled: true, // Often improves rendering with GeoServer
   styles: '' // Use default style
 };
+
 
 const parcels = ref([
   {
@@ -61,6 +62,19 @@ const parcels = ref([
     area: 2500,
     type: 'Public',
     status: 'sold'
+  },
+  {
+    id: 4,
+    latLngs:[
+      [6.2337,  1.2054],
+      [6.2347,  1.2061],
+      [6.2332,  1.2080],
+      [6.2318,  1.2058]
+    ],
+    owner: 'MOUZOU payodena',
+    area: 2000,
+    type: 'Public',
+    status: 'essi'
   }
 ]);
 
@@ -68,6 +82,7 @@ const parcels = ref([
 const getParcelColor = (status) => {
   if (status === 'sold') return 'red';
   if (status === 'for_sale') return 'green';
+  if (status === 'essi') return 'pink';
   return 'blue';
 };
 
@@ -98,6 +113,7 @@ const closeDetail = () => {
         <option value="all">Tout voir</option>
         <option value="for_sale">A vendre (Vert)</option>
         <option value="sold">Vendu (Rouge)</option>
+        <option value="essi">Essi (orange)</option>
       </select>
     </div>
 
@@ -154,3 +170,5 @@ const closeDetail = () => {
   z-index: 1000;
 }
 </style>
+
+
