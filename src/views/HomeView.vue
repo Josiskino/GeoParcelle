@@ -65,7 +65,7 @@ const parcels = ref([
   },
   {
     id: 4,
-    latLngs:[
+    latlngs: [
       [6.2337,  1.2054],
       [6.2347,  1.2061],
       [6.2332,  1.2080],
@@ -82,7 +82,7 @@ const parcels = ref([
 const getParcelColor = (status) => {
   if (status === 'sold') return 'red';
   if (status === 'for_sale') return 'green';
-  if (status === 'essi') return 'pink';
+  if (status === 'essi') return 'orange';
   return 'blue';
 };
 
