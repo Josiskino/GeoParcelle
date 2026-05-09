@@ -5,10 +5,12 @@ import { LMap, LTileLayer, LPolygon, LWmsTileLayer } from "@vue-leaflet/vue-leaf
 import ParcelDetail from '../components/ParcelDetail.vue';
 
 const zoom = ref(19); // Zoomed in closer for cadastral data
-const center = ref([6.2340, 1.2038]); 
+const center = ref([6.2340, 1.2038]);
 
 const selectedParcel = ref(null);
-const filterStatus = ref('all'); 
+const filterStatus = ref('all');
+const mapRef = ref(null);
+const isFetchingInfo = ref(false);
 
 // GeoServer Configuration
 // Surchargeables via les env vars Vercel (VITE_GEOSERVER_URL, VITE_GEOSERVER_LAYER).
@@ -24,6 +26,48 @@ const wmsLayerOptions = {
   maxZoom: 22,
   tiled: true, // Often improves rendering with GeoServer
   styles: '' // Use default style
+};
+
+// Clic sur la carte → demande à GeoServer les attributs de la feature
+// au pixel cliqué (WMS GetFeatureInfo, retour en GeoJSON).
+const onMapClick = async (event) => {
+  const map = mapRef.value?.leafletObject;
+  if (!map) return;
+
+  const point = map.latLngToContainerPoint(event.latlng);
+  const size = map.getSize();
+  const bounds = map.getBounds();
+
+  const url = new URL(geoserverUrl);
+  const params = {
+    SERVICE: 'WMS',
+    VERSION: '1.1.1',
+    REQUEST: 'GetFeatureInfo',
+    LAYERS: wmsLayerOptions.layers,
+    QUERY_LAYERS: wmsLayerOptions.layers,
+    INFO_FORMAT: 'application/json',
+    SRS: 'EPSG:4326',
+    BBOX: `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`,
+    WIDTH: Math.round(size.x),
+    HEIGHT: Math.round(size.y),
+    X: Math.round(point.x),
+    Y: Math.round(point.y),
+    FEATURE_COUNT: 5,
+  };
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  isFetchingInfo.value = true;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`GeoServer ${res.status}`);
+    const data = await res.json();
+    selectedParcel.value = data.features?.[0]?.properties ?? null;
+  } catch (err) {
+    console.error('GetFeatureInfo failed:', err);
+    selectedParcel.value = null;
+  } finally {
+    isFetchingInfo.value = false;
+  }
 };
 
 
@@ -120,7 +164,13 @@ const closeDetail = () => {
       </select>
     </div>
 
-    <l-map ref="map" v-model:zoom="zoom" v-model:center="center" :useGlobalLeaflet="false">
+    <l-map
+      ref="mapRef"
+      v-model:zoom="zoom"
+      v-model:center="center"
+      :useGlobalLeaflet="false"
+      @click="onMapClick"
+    >
       <!-- Base Layer (OpenStreetMap) -->
       <l-tile-layer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
