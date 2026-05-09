@@ -11,9 +11,12 @@ const selectedParcel = ref(null);
 const filterStatus = ref('all'); 
 
 // GeoServer Configuration
-const geoserverUrl = "https://monticulate-superingeniously-marge.ngrok-free.dev/geoserver/DCCF/wms";
+// Surchargeables via les env vars Vercel (VITE_GEOSERVER_URL, VITE_GEOSERVER_LAYER).
+const geoserverUrl =
+  import.meta.env.VITE_GEOSERVER_URL ||
+  "https://websig-geo.josuelassey.pro/geoserver/geoportail/wms";
 const wmsLayerOptions = {
-  layers: "DCCF:parcelles_ag1", // Added namespace just to be safe
+  layers: import.meta.env.VITE_GEOSERVER_LAYER || "geoportail:parcelles_ag1",
   format: "image/png",
   transparent: true,
   version: '1.1.1',
